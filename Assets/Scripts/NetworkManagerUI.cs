@@ -4,15 +4,16 @@ using UnityEngine.UI;
 
 public class NetworkManagerUI : MonoBehaviour {
 
-    [SerializeField] private Button startHostButton;
-    [SerializeField] private Button startClientButton;
+    [SerializeField] private Button hostButton;
+    [SerializeField] private Button clientButton;
 
     private void Awake() {
-        startHostButton.onClick.AddListener(() => {
+        //two buttons, two paths, pretty simple
+        hostButton.onClick.AddListener(() => {
             NetworkManager.Singleton.StartHost();
             Hide();
         });
-        startClientButton.onClick.AddListener(() => {
+        clientButton.onClick.AddListener(() => {
             NetworkManager.Singleton.StartClient();
             Hide();
         });

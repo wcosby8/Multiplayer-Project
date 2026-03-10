@@ -2,10 +2,11 @@ using UnityEngine;
 
 public class GridPosition : MonoBehaviour {
 
-    [SerializeField] private int x;
-    [SerializeField] private int y;
+    [SerializeField] private int col;
+    [SerializeField] private int row;
     private void OnMouseDown() {
-        Debug.Log($"Click: ({x}, {y})");
-        GameManager.Instance.ClickedOnGridPositionRpc(x, y, GameManager.Instance.GetLocalPlayerType());
+        //this is just "hey server, i clicked this square"
+        Debug.Log($"Click: ({col}, {row})");
+        GameManager.Instance.TryPlaceRpc(col, row, GameManager.Instance.GetMyMark());
     }
 }

@@ -245,8 +245,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13cb96c7ff39cff48b0b37e8c8929c14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManagerUI
-  startHostButton: {fileID: 163419069}
-  startClientButton: {fileID: 585276365}
+  hostButton: {fileID: 163419069}
+  clientButton: {fileID: 585276365}
 --- !u!1 &163419067
 GameObject:
   m_ObjectHideFlags: 0
@@ -1316,6 +1316,14 @@ PrefabInstance:
       propertyPath: y
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1559,6 +1567,14 @@ PrefabInstance:
       propertyPath: x
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1670,9 +1686,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   ShowTopMostFoldoutHeaderGroup: 1
-  crossPrefab: {fileID: 5607434546366239157, guid: dd8ebd11084b6d2448eae9f5ffff94e2, type: 3}
-  circlePrefab: {fileID: 5607434546366239157, guid: d57bdd568ed4dfe4f8b738be483a5fef, type: 3}
-  lineCompletePrefab: {fileID: 5720227956189793314, guid: d61e9e8247b7406499d95633a324bca0, type: 3}
+  xPrefab: {fileID: 5607434546366239157, guid: dd8ebd11084b6d2448eae9f5ffff94e2, type: 3}
+  oPrefab: {fileID: 5607434546366239157, guid: d57bdd568ed4dfe4f8b738be483a5fef, type: 3}
+  winLinePrefab: {fileID: 5720227956189793314, guid: d61e9e8247b7406499d95633a324bca0, type: 3}
 --- !u!4 &899394204
 Transform:
   m_ObjectHideFlags: 0
@@ -1843,6 +1859,10 @@ PrefabInstance:
     - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
       propertyPath: y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2147,10 +2167,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8e5c6307c4008a49b1fd54b676a5f69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUI
-  crossArrowGameObject: {fileID: 11424309}
-  circleArrowGameObject: {fileID: 869501562}
-  crossYouTextGameObject: {fileID: 1238142895}
-  circleYouTextGameObject: {fileID: 370490536}
+  xArrow: {fileID: 11424309}
+  oArrow: {fileID: 869501562}
+  xYouText: {fileID: 1238142895}
+  oYouText: {fileID: 370490536}
 --- !u!1001 &1351912022
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2205,6 +2225,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
       propertyPath: y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
       value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -2271,6 +2299,10 @@ PrefabInstance:
     - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
       propertyPath: y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2397,6 +2429,10 @@ PrefabInstance:
     - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
       propertyPath: x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2808,6 +2844,10 @@ PrefabInstance:
       propertyPath: y
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3117,6 +3157,14 @@ PrefabInstance:
     - target: {fileID: 7934734526955465633, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: col
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822894241284909143, guid: 2a793aa4d13db1c468d9d83c56eaf1f3, type: 3}
+      propertyPath: row
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

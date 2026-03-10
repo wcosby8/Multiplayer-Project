@@ -7,73 +7,73 @@ public class GameManager : NetworkBehaviour {
 
     public static GameManager Instance { get; private set; }
 
-    public event EventHandler<OnClickedOnGridPositionEventArgs> OnClickedOnGridPosition;
-    public class OnClickedOnGridPositionEventArgs : EventArgs {
-        public int x;
-        public int y;
-        public PlayerType playerType;
+    public event EventHandler<GridClickArgs> GridClicked;
+    public class GridClickArgs : EventArgs {
+        public int col;
+        public int row;
+        public Mark mark;
     }
 
-    public event EventHandler OnGameStarted;
-    public event EventHandler<OnGameWinEventArgs> OnGameWin;
-    public class OnGameWinEventArgs : EventArgs {
-        public Line line;
+    public event EventHandler MatchStarted;
+    public event EventHandler<WinArgs> MatchWon;
+    public class WinArgs : EventArgs {
+        public WinLine winLine;
     }
-    public event EventHandler OnCurrentPlayablePlayerTypeChanged;
+    public event EventHandler TurnChanged;
 
-    public enum PlayerType {
+    public enum Mark {
         None,
-        Cross,
-        Circle
+        X,
+        O
     }
 
 
-    public enum Orientation{
+    public enum WinLineDir{
         Horizontal,
         Vertical,
-        DiagonalA,
-        DiagonalB,
+        DiagonalMain,
+        DiagonalAnti,
     }
 
-    public struct Line{
+    public struct WinLine{
         public List<Vector2Int> gridVector2IntList;
         public Vector2Int centerGridPosition;
-        public Orientation orientation;
+        public WinLineDir dir;
     }
 
-    private PlayerType localPlayerType;
-    private NetworkVariable<PlayerType> currentPlayablePlayerType = new NetworkVariable<PlayerType>();
-    private PlayerType[,] playerTypeArray;
-    private List<Line> lineList;
+    private Mark myMark;
+    private NetworkVariable<Mark> turnMark = new NetworkVariable<Mark>();
+    private Mark[,] board;
+    private List<WinLine> winLines;
 
     private void Awake() {
         if (Instance != null) {
             Debug.LogError("There is more than one GameManager! " + transform + " - " + Instance);
         }
         Instance = this;
-        playerTypeArray = new PlayerType[3, 3];
+        board = new Mark[3, 3];
 
-        lineList = new List<Line> {
-            new Line { 
+        winLines = new List<WinLine> {
+            new WinLine { 
                 gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(0, 1), new Vector2Int(0, 2) }, 
                 centerGridPosition = new Vector2Int(0, 1),
-                orientation = Orientation.Vertical
+                dir = WinLineDir.Vertical
             },
-            new Line { 
+            new WinLine { 
                 gridVector2IntList = new List<Vector2Int> { new Vector2Int(1, 0), new Vector2Int(1, 1), new Vector2Int(1, 2) }, 
                 centerGridPosition = new Vector2Int(1, 1),
-                orientation = Orientation.Vertical
+                dir = WinLineDir.Vertical
             },
-            new Line { 
+            new WinLine { 
                 gridVector2IntList = new List<Vector2Int> { new Vector2Int(2, 0), new Vector2Int(2, 1), new Vector2Int(2, 2) }, 
                 centerGridPosition = new Vector2Int(2, 1),
-                orientation = Orientation.Vertical
+                dir = WinLineDir.Vertical
             },
-            new Line { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(2, 0) }, centerGridPosition = new Vector2Int(1, 0), orientation = Orientation.Horizontal },
-            new Line { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 1), new Vector2Int(1, 1), new Vector2Int(2, 1) }, centerGridPosition = new Vector2Int(1, 1), orientation = Orientation.Horizontal },
-            new Line { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 2), new Vector2Int(1, 2), new Vector2Int(2, 2) }, centerGridPosition = new Vector2Int(1, 2), orientation = Orientation.Horizontal },
-            new Line { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 1), new Vector2Int(2, 2) }, centerGridPosition = new Vector2Int(1, 1), orientation = Orientation.DiagonalA },
-            new Line { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 2), new Vector2Int(1, 1), new Vector2Int(2, 0) }, centerGridPosition = new Vector2Int(1, 1), orientation = Orientation.DiagonalB },
+            new WinLine { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(2, 0) }, centerGridPosition = new Vector2Int(1, 0), dir = WinLineDir.Horizontal },
+            new WinLine { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 1), new Vector2Int(1, 1), new Vector2Int(2, 1) }, centerGridPosition = new Vector2Int(1, 1), dir = WinLineDir.Horizontal },
+            new WinLine { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 2), new Vector2Int(1, 2), new Vector2Int(2, 2) }, centerGridPosition = new Vector2Int(1, 2), dir = WinLineDir.Horizontal },
+            new WinLine { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 1), new Vector2Int(2, 2) }, centerGridPosition = new Vector2Int(1, 1), dir = WinLineDir.DiagonalMain },
+            new WinLine { gridVector2IntList = new List<Vector2Int> { new Vector2Int(0, 2), new Vector2Int(1, 1), new Vector2Int(2, 0) }, centerGridPosition = new Vector2Int(1, 1), dir = WinLineDir.DiagonalAnti },
         };
     }
     
@@ -81,86 +81,93 @@ public class GameManager : NetworkBehaviour {
     public override void OnNetworkSpawn() {
         Debug.Log("OnNetworkSpawn: " + NetworkManager.Singleton.LocalClientId);
         if (NetworkManager.Singleton.LocalClientId == 0) {
-            localPlayerType = PlayerType.Cross;
+            myMark = Mark.X;
         } else {
-            localPlayerType = PlayerType.Circle;
+            myMark = Mark.O;
         }
+        //server waits until both people are here before starting
         if (IsServer) {
-            NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_OnClientConnectedCallback;
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         }
 
-        currentPlayablePlayerType.OnValueChanged += (PlayerType oldPlayerType, PlayerType newPlayerType) => {
-            OnCurrentPlayablePlayerTypeChanged?.Invoke(this, EventArgs.Empty);
-        };
+        turnMark.OnValueChanged += OnTurnMarkChanged;
     }
 
-    private void NetworkManager_OnClientConnectedCallback(ulong obj) {
+    private void OnTurnMarkChanged(Mark oldMark, Mark newMark) {
+        TurnChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnClientConnected(ulong clientId) {
         if (NetworkManager.Singleton.ConnectedClients.Count == 2) {
-            currentPlayablePlayerType.Value = PlayerType.Cross;
-            TriggerOnGameStartedRpc();
+            turnMark.Value = Mark.X;
+            NotifyMatchStartedRpc();
         }
     }
 
     [Rpc(SendTo.ClientsAndHost)]
-    private void TriggerOnGameStartedRpc() {
-        OnGameStarted?.Invoke(this, EventArgs.Empty);
+    private void NotifyMatchStartedRpc() {
+        //everyone gets the "go time" signal at once
+        MatchStarted?.Invoke(this, EventArgs.Empty);
     }
 
     [Rpc(SendTo.Server)]
-    public void ClickedOnGridPositionRpc(int x, int y, PlayerType playerType) {
-        Debug.Log("Clicked Grid Position: " + x + ", " + y);
-        if (playerType != currentPlayablePlayerType.Value) {
+    public void TryPlaceRpc(int col, int row, Mark mark) {
+        Debug.Log("Clicked Grid Position: " + col + ", " + row);
+        //quick sanity check so people cant place twice in a row
+        if (mark != turnMark.Value) {
             Debug.Log("It's not your turn!");
             return;
         }
 
-        if (playerTypeArray[x, y] != PlayerType.None) {
+        //no overwriting squares
+        if (board[col, row] != Mark.None) {
             Debug.Log("This grid position is already taken!");
             return;
         }
-        playerTypeArray[x, y] = playerType;
+        board[col, row] = mark;
 
-        OnClickedOnGridPosition?.Invoke(this, new OnClickedOnGridPositionEventArgs {
-            x = x,
-            y = y,
-            playerType = playerType,
+        GridClicked?.Invoke(this, new GridClickArgs {
+            col = col,
+            row = row,
+            mark = mark,
         });
 
-        switch (currentPlayablePlayerType.Value) {
+        switch (turnMark.Value) {
             default:
-            case PlayerType.Cross:
-                currentPlayablePlayerType.Value = PlayerType.Circle;
+            case Mark.X:
+                turnMark.Value = Mark.O;
                 break;
-            case PlayerType.Circle:
-                currentPlayablePlayerType.Value = PlayerType.Cross;
+            case Mark.O:
+                turnMark.Value = Mark.X;
                 break;
         }
 
-        TestWinner();
+        //after every move, just see if somebody won
+        CheckForWin();
 
     }
 
 
-    private bool TestWinnerLine(Line line) {
-        return TestWinnerLine(
-            playerTypeArray[line.gridVector2IntList[0].x, line.gridVector2IntList[0].y],
-            playerTypeArray[line.gridVector2IntList[1].x, line.gridVector2IntList[1].y],
-            playerTypeArray[line.gridVector2IntList[2].x, line.gridVector2IntList[2].y]
+    private bool IsWinLine(WinLine winLine) {
+        return IsWinLine(
+            board[winLine.gridVector2IntList[0].x, winLine.gridVector2IntList[0].y],
+            board[winLine.gridVector2IntList[1].x, winLine.gridVector2IntList[1].y],
+            board[winLine.gridVector2IntList[2].x, winLine.gridVector2IntList[2].y]
         );
     }
 
-    private bool TestWinnerLine(PlayerType aPlayerType, PlayerType bPlayerType, PlayerType cPlayerType) {
-        return aPlayerType != PlayerType.None && aPlayerType == bPlayerType && bPlayerType == cPlayerType;
+    private bool IsWinLine(Mark a, Mark b, Mark c) {
+        return a != Mark.None && a == b && b == c;
     }
 
-    private void TestWinner() {
-        // Check rows, columns and diagonals for a winner
-        foreach(Line line in lineList) {
-            if (TestWinnerLine(line)) {
+    private void CheckForWin() {
+        foreach(WinLine winLine in winLines) {
+            if (IsWinLine(winLine)) {
                 Debug.Log("We have a winner!");
-                currentPlayablePlayerType.Value = PlayerType.None; // Game over
-                OnGameWin?.Invoke(this, new OnGameWinEventArgs {
-                    line = line
+                //game is over so nobody should be able to place anything else
+                turnMark.Value = Mark.None;
+                MatchWon?.Invoke(this, new WinArgs {
+                    winLine = winLine
                 });
                 break;
             }
@@ -170,12 +177,12 @@ public class GameManager : NetworkBehaviour {
 
 
 
-    public PlayerType GetLocalPlayerType() {
-        return localPlayerType;
+    public Mark GetMyMark() {
+        return myMark;
     }
 
-    public PlayerType GetCurrentPlayablePlayerType() {
-        return currentPlayablePlayerType.Value;
+    public Mark GetTurnMark() {
+        return turnMark.Value;
     }
 
 }
