@@ -10,24 +10,25 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private Color xLoseColor;
     [SerializeField] private Button playAgainButton;
 
+    private void Start(){
+        GameManager.Instance.GameWon += HandleGameWon;
+        GameManager.Instance.RematchStarted += HandleRematchStarted;
+        Hide();
+    }
+
     private void Awake(){
+        //when you mash play again we just ask the server for a fresh board
         playAgainButton.onClick.AddListener(() => {
-            GameManager.Instance.RematchRpc();
+            GameManager.Instance.StartRematchRpc();
         });
     }
 
-
-    private void Start(){
-        GameManager.Instance.GameWon += GameManager_OnGameWon;
-        GameManager.Instance.OnRematch += GameManager_OnRematch;
-        Hide();
-    }
-    private void GameManager_OnRematch(object sender, EventArgs e){
+    private void HandleRematchStarted(object sender, EventArgs e){
         Hide();
     }
 
 
-    private void GameManager_OnGameWon(object sender, GameManager.GameWonArgs e){
+    private void HandleGameWon(object sender, GameManager.GameWonArgs e){
         //this is just checking if the winner mark matches the local player's mark
         if(e.winPlayerType == GameManager.Instance.GetMyMark()){
             xWinText.text = "you win!";

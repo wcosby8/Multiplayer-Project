@@ -13,7 +13,6 @@ public class NetworkManagerUI : MonoBehaviour {
     private const ushort PORT = 7777;
 
     private void Awake() {
-        //two buttons, two paths, pretty simple
         if (transport == null) {
             var nm = NetworkManager.Singleton;
             if (nm == null) {
@@ -26,6 +25,8 @@ public class NetworkManagerUI : MonoBehaviour {
                 return;
             }
         }
+
+        //two buttons, two paths, pretty simple
         hostButton.onClick.AddListener(() => {
             //host listens on this machine, clients connect via lan ip
             transport.SetConnectionData("0.0.0.0", PORT);
@@ -33,6 +34,7 @@ public class NetworkManagerUI : MonoBehaviour {
             Hide();
         });
         clientButton.onClick.AddListener(() => {
+            //client always points at the windows box on the lan
             transport.SetConnectionData(HOST_IP, PORT);
             NetworkManager.Singleton.StartClient();
             Hide();

@@ -19,14 +19,40 @@ public class GameVisualManager : NetworkBehaviour
     }
 
     private void Start() {
-            //just listening for game events and spawning visuals
-            GameManager.Instance.SquarePicked += GameManager_OnSquarePicked;
-            GameManager.Instance.GameWon += GameManager_OnGameWon;
-            GameManager.Instance.OnRematch += GameManager_OnRematch;
+        //just listening for game events and spawning visuals
+        GameManager.Instance.SquarePicked += HandleSquarePicked;
+        GameManager.Instance.GameWon += HandleGameWon;
+        GameManager.Instance.RematchStarted += HandleRematchStarted;
+    }
+
+    private Vector2 ToWorldPos(int col, int row) {
+        //tiny helper so the board doesnt have a bunch of repeated math everywhere
+        return new Vector2(-CELL_SIZE + col * CELL_SIZE, -CELL_SIZE + row * CELL_SIZE);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void SpawnMarkRpc(int col, int row, GameManager.Mark mark){
+        Debug.Log("SpawnObject");
+        //server spawns the actual network objects so both clients stay in sync
+        Transform prefab;
+        switch(mark){
+            default:
+            case GameManager.Mark.X:
+                prefab = xPrefab;
+                break;
+            case GameManager.Mark.O:
+                prefab = oPrefab;
+                break;
+        }
+        Transform spawnedMarkTransform = Instantiate(prefab, ToWorldPos(col, row), Quaternion.identity);
+        spawnedMarkTransform.GetComponent<NetworkObject>().Spawn(true);
+
+        visualGameObjectList.Add(spawnedMarkTransform.gameObject);
+        
     }
 
 
-    private void GameManager_OnRematch(object sender, EventArgs e) {
+    private void HandleRematchStarted(object sender, EventArgs e) {
         if(!NetworkManager.Singleton.IsServer){
             return;
         }
@@ -36,7 +62,7 @@ public class GameVisualManager : NetworkBehaviour
         visualGameObjectList.Clear();
     }
 
-    private void GameManager_OnGameWon(object sender, GameManager.GameWonArgs e) {
+    private void HandleGameWon(object sender, GameManager.GameWonArgs e) {
         if(!NetworkManager.Singleton.IsServer){
             return;
         }
@@ -62,33 +88,7 @@ public class GameVisualManager : NetworkBehaviour
         visualGameObjectList.Add(winLineTransform.gameObject);
     }
 
-    private void GameManager_OnSquarePicked(object sender, GameManager.SquarePickArgs e) {
+    private void HandleSquarePicked(object sender, GameManager.SquarePickArgs e) {
         SpawnMarkRpc(e.x, e.y, e.mark);
-    }
-
-    [Rpc(SendTo.Server)]
-    private void SpawnMarkRpc(int col, int row, GameManager.Mark mark){
-        Debug.Log("SpawnObject");
-        //server spawns the actual network objects so both clients stay in sync
-        Transform prefab;
-        switch(mark){
-            default:
-            case GameManager.Mark.X:
-                prefab = xPrefab;
-                break;
-            case GameManager.Mark.O:
-                prefab = oPrefab;
-                break;
-        }
-        Transform spawnedMarkTransform = Instantiate(prefab, ToWorldPos(col, row), Quaternion.identity);
-        spawnedMarkTransform.GetComponent<NetworkObject>().Spawn(true);
-
-        visualGameObjectList.Add(spawnedMarkTransform.gameObject);
-        
-    }
-
-    private Vector2 ToWorldPos(int col, int row) {
-        //tiny helper so the board doesnt have a bunch of repeated math everywhere
-        return new Vector2(-CELL_SIZE + col * CELL_SIZE, -CELL_SIZE + row * CELL_SIZE);
     }
 }

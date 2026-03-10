@@ -7,6 +7,13 @@ public class GameManager : NetworkBehaviour {
 
     public static GameManager Instance { get; private set; }
 
+    private const int BOARD_SIZE = 3;
+
+    private Mark myMark;
+    private readonly NetworkVariable<Mark> turnMark = new NetworkVariable<Mark>();
+    private Mark[,] board;
+    private List<WinLine> winLines;
+
     public event EventHandler<SquarePickArgs> SquarePicked;
     public class SquarePickArgs : EventArgs {
         public int x;
@@ -21,7 +28,7 @@ public class GameManager : NetworkBehaviour {
         public Mark winPlayerType;
     }
     public event EventHandler TurnChanged;
-    public event EventHandler OnRematch;
+    public event EventHandler RematchStarted;
 
     public enum Mark {
         None,
@@ -44,13 +51,6 @@ public class GameManager : NetworkBehaviour {
         public Vector2Int center;
         public WinLineDir dir;
     }
-
-    private const int BOARD_SIZE = 3;
-
-    private Mark myMark;
-    private readonly NetworkVariable<Mark> turnMark = new NetworkVariable<Mark>();
-    private Mark[,] board;
-    private List<WinLine> winLines;
 
     private void Awake() {
         if (Instance != null) {
@@ -79,6 +79,14 @@ public class GameManager : NetworkBehaviour {
         }
 
         turnMark.OnValueChanged += OnTurnMarkChanged;
+    }
+
+    public Mark GetMyMark() {
+        return myMark;
+    }
+
+    public Mark GetTurnMark() {
+        return turnMark.Value;
     }
 
     private void OnTurnMarkChanged(Mark oldMark, Mark newMark) {
@@ -114,15 +122,6 @@ public class GameManager : NetworkBehaviour {
         FlipTurn();
         CheckForWin();
 
-    }
-
-
-    public Mark GetMyMark() {
-        return myMark;
-    }
-
-    public Mark GetTurnMark() {
-        return turnMark.Value;
     }
 
     private bool IsValidMove(int x, int y, Mark mark) {
@@ -181,6 +180,26 @@ public class GameManager : NetworkBehaviour {
         });
     }
 
+    [Rpc(SendTo.Server)]
+    public void StartRematchRpc() {
+        //wipe out the old board state
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            for (int y = 0; y < BOARD_SIZE; y++) {
+                board[x, y] = Mark.None;
+            }
+        }
+        //x always goes first again after a rematch
+        turnMark.Value = Mark.X;
+        //tell everyone the new round is live
+        BroadcastStartRpc();
+        NotifyRematchRpc();
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void NotifyRematchRpc() {
+        RematchStarted?.Invoke(this, EventArgs.Empty);
+    }
+
     private List<WinLine> BuildWinLines() {
         var lines = new List<WinLine>(8);
 
@@ -223,25 +242,5 @@ public class GameManager : NetworkBehaviour {
         });
 
         return lines;
-    }
-
-    [Rpc(SendTo.Server)]
-    public void RematchRpc() {
-        //reset the game
-        for (int x = 0; x < BOARD_SIZE; x++) {
-            for (int y = 0; y < BOARD_SIZE; y++) {
-                board[x, y] = Mark.None;
-            }
-        }
-        //x always goes first again after a rematch
-        turnMark.Value = Mark.X;
-        //tell everyone the new round is live
-        BroadcastStartRpc();
-        TriggerOnRematchRpc();
-    }
-
-    [Rpc(SendTo.ClientsAndHost)]
-    private void TriggerOnRematchRpc() {
-        OnRematch?.Invoke(this, EventArgs.Empty);
     }
 }
