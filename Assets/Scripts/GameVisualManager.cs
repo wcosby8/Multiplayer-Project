@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,15 +12,36 @@ public class GameVisualManager : NetworkBehaviour
     [SerializeField] private Transform oPrefab;
     [SerializeField] private Transform winLinePrefab;
 
-    private void Start() {
-            //just listening for game events and spawning visuals
-            GameManager.Instance.GridClicked += GameManager_OnGridClicked;
-            GameManager.Instance.MatchWon += GameManager_OnMatchWon;
+    private List<GameObject> visualGameObjectList;
+
+    private void Awake() {
+        visualGameObjectList = new List<GameObject>();
     }
 
-    private void GameManager_OnMatchWon(object sender, GameManager.WinArgs e) {
+    private void Start() {
+            //just listening for game events and spawning visuals
+            GameManager.Instance.SquarePicked += GameManager_OnSquarePicked;
+            GameManager.Instance.GameWon += GameManager_OnGameWon;
+            GameManager.Instance.OnRematch += GameManager_OnRematch;
+    }
+
+
+    private void GameManager_OnRematch(object sender, EventArgs e) {
+        if(!NetworkManager.Singleton.IsServer){
+            return;
+        }
+        foreach(GameObject visualGameObject in visualGameObjectList){
+            Destroy(visualGameObject);
+        }
+        visualGameObjectList.Clear();
+    }
+
+    private void GameManager_OnGameWon(object sender, GameManager.GameWonArgs e) {
+        if(!NetworkManager.Singleton.IsServer){
+            return;
+        }
         float eulerZ = 0;
-        switch(e.winLine.dir) {
+        switch(e.line.dir) {
             default:
             case GameManager.WinLineDir.Horizontal:
                 eulerZ = 0f;
@@ -34,12 +57,13 @@ public class GameVisualManager : NetworkBehaviour
                 break;       
         }
 
-        Transform winLineTransform = Instantiate(winLinePrefab, ToWorldPos(e.winLine.centerGridPosition.x, e.winLine.centerGridPosition.y), Quaternion.Euler(0,0,eulerZ));
+        Transform winLineTransform = Instantiate(winLinePrefab, ToWorldPos(e.line.center.x, e.line.center.y), Quaternion.Euler(0,0,eulerZ));
         winLineTransform.GetComponent<NetworkObject>().Spawn(true);
+        visualGameObjectList.Add(winLineTransform.gameObject);
     }
 
-    private void GameManager_OnGridClicked(object sender, GameManager.GridClickArgs e) {
-        SpawnMarkRpc(e.col, e.row, e.mark);
+    private void GameManager_OnSquarePicked(object sender, GameManager.SquarePickArgs e) {
+        SpawnMarkRpc(e.x, e.y, e.mark);
     }
 
     [Rpc(SendTo.Server)]
@@ -58,6 +82,8 @@ public class GameVisualManager : NetworkBehaviour
         }
         Transform spawnedMarkTransform = Instantiate(prefab, ToWorldPos(col, row), Quaternion.identity);
         spawnedMarkTransform.GetComponent<NetworkObject>().Spawn(true);
+
+        visualGameObjectList.Add(spawnedMarkTransform.gameObject);
         
     }
 

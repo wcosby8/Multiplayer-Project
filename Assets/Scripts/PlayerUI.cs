@@ -16,7 +16,7 @@ public class PlayerUI : MonoBehaviour {
     }
 
     private void Start() {
-        GameManager.Instance.MatchStarted += GameManager_OnMatchStarted;
+        GameManager.Instance.GameStarted += GameManager_OnGameStarted;
         GameManager.Instance.TurnChanged += GameManager_OnTurnChanged;
     }
 
@@ -24,7 +24,7 @@ public class PlayerUI : MonoBehaviour {
         RefreshTurnArrow();
     }
 
-    private void GameManager_OnMatchStarted(object sender, System.EventArgs e) {
+    private void GameManager_OnGameStarted(object sender, System.EventArgs e) {
         if (GameManager.Instance.GetMyMark() == GameManager.Mark.X) {
             xYouText.SetActive(true);
         } else {
